@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Learning Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background: #0b1020;
+      color: #e3f2fd;
+      font-family: Arial, sans-serif;
+      padding: 16px;
+    }
+
+    .buttons {
+      margin-bottom: 16px;
+    }
+
+    button {
+      background: #0d47a1;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    canvas {
+      background: #0b1020;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="buttons" id="buttons"></div>
+  <canvas id="chart"></canvas>
+
+<script>
+const CSV_URL =
+  "PASTE_YOUR_RAW_CSV_URL_HERE";
+
+let chart;
+
+fetch(CSV_URL)
+  .then(res => res.text())
+  .then(text => {
+    const rows = text.trim().split("\n").slice(1);
+    const data = rows.map(r => {
+      const [assignment, full, scored, skill] = r.split(",");
+      return {
+        skill: skill,
+        percent: (scored / full) * 100
+      };
+    });
+
+    const skills = [...new Set(data.map(d => d.skill))];
+    const buttonsDiv = document.getElementById("buttons");
+
+    skills.forEach(skill => {
+      const btn = document.createElement("button");
+      btn.innerText = skill;
+      btn.onclick = () => draw(skill);
+      buttonsDiv.appendChild(btn);
+    });
+
+    function draw(skill) {
+      const filtered = data.filter(d => d.skill === skill);
+      const values = filtered.map(d => d.percent);
+
+      if (chart) chart.destroy();
+
+      chart = new Chart(document.getElementById("chart"), {
+        type: "line",
+        data: {
+          labels: values.map((_, i) => i + 1),
+          datasets: [{
+            label: skill + " Performance",
+            data: values,
+            borderColor: "#4fc3f7",
+            backgroundColor: "transparent",
+            tension: 0.3
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              min: 0,
+              max: 100
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
