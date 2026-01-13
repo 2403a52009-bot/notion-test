@@ -14,8 +14,13 @@
       padding: 16px;
     }
 
+    input[type="file"] {
+      margin-bottom: 12px;
+      color: white;
+    }
+
     .buttons {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     button {
@@ -34,50 +39,66 @@
 
     canvas {
       background: #0b1020;
+      width: 100% !important;
+      max-width: 100%;
     }
   </style>
 </head>
 
 <body>
 
+  <h3>📊 Learning Analytics</h3>
+
+  <input type="file" id="csvFile" accept=".csv" />
+
   <div class="buttons" id="buttons"></div>
-  <canvas id="chart"></canvas>
+  <canvas id="chart" height="300"></canvas>
 
 <script>
-const CSV_URL = "asn test 2e7f8b78034980df850dc0ded1ccdec7.csv";
-let chart;
 let data = [];
+let chart;
 
-fetch(CSV_URL)
-  .then(res => res.text())
-  .then(text => {
-    const rows = text.trim().split("\n").slice(1);
+document.getElementById("csvFile").addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    data = rows.map(r => {
-      const cols = r.split(",");
-      return {
-        assignment: cols[0],
-        full: Number(cols[1]),
-        scored: Number(cols[2]),
-        skill: cols[3],
-        percent: (Number(cols[2]) / Number(cols[1])) * 100
-      };
-    });
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    parseCSV(event.target.result);
+  };
+  reader.readAsText(file);
+});
 
-    const skills = [...new Set(data.map(d => d.skill))];
-    const buttonsDiv = document.getElementById("buttons");
+function parseCSV(text) {
+  const rows = text.trim().split("\n").slice(1);
 
-    skills.forEach(skill => {
-      const btn = document.createElement("button");
-      btn.innerText = skill;
-      btn.onclick = () => draw(skill);
-      buttonsDiv.appendChild(btn);
-    });
-  })
-  .catch(err => {
-    document.body.innerHTML = "CSV load failed";
-    console.error(err);
+  data = rows.map(r => {
+    const cols = r.split(",");
+    return {
+      assignment: cols[0],
+      full: Number(cols[1]),
+      scored: Number(cols[2]),
+      skill: cols[3],
+      percent: (Number(cols[2]) / Number(cols[1])) * 100
+    };
   });
+
+  renderButtons();
+}
+
+function renderButtons() {
+  const buttonsDiv = document.getElementById("buttons");
+  buttonsDiv.innerHTML = "";
+
+  const skills = [...new Set(data.map(d => d.skill))];
+
+  skills.forEach(skill => {
+    const btn = document.createElement("button");
+    btn.innerText = skill;
+    btn.onclick = () => draw(skill);
+    buttonsDiv.appendChild(btn);
+  });
+}
 
 function draw(skill) {
   const filtered = data.filter(d => d.skill === skill);
@@ -109,7 +130,6 @@ function draw(skill) {
     }
   });
 }
-  
 </script>
 
 </body>
