@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Learning Analytics</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -43,20 +44,23 @@
   <canvas id="chart"></canvas>
 
 <script>
-const CSV_URL =
-  "https://raw.githubusercontent.com/2403a52009-bot/notion-test/refs/heads/main/asn%20test%202e7f8b78034980df850dc0ded1ccdec7.csv";
-
+const CSV_URL = "asn test 2e7f8b78034980df850dc0ded1ccdec7.csv";
 let chart;
+let data = [];
 
 fetch(CSV_URL)
   .then(res => res.text())
   .then(text => {
     const rows = text.trim().split("\n").slice(1);
-    const data = rows.map(r => {
-      const [assignment, full, scored, skill] = r.split(",");
+
+    data = rows.map(r => {
+      const cols = r.split(",");
       return {
-        skill: skill,
-        percent: (scored / full) * 100
+        assignment: cols[0],
+        full: Number(cols[1]),
+        scored: Number(cols[2]),
+        skill: cols[3],
+        percent: (Number(cols[2]) / Number(cols[1])) * 100
       };
     });
 
@@ -69,36 +73,40 @@ fetch(CSV_URL)
       btn.onclick = () => draw(skill);
       buttonsDiv.appendChild(btn);
     });
+  })
+  .catch(err => {
+    document.body.innerHTML = "CSV load failed";
+    console.error(err);
+  });
 
-    function draw(skill) {
-      const filtered = data.filter(d => d.skill === skill);
-      const values = filtered.map(d => d.percent);
+function draw(skill) {
+  const filtered = data.filter(d => d.skill === skill);
+  const values = filtered.map(d => d.percent);
 
-      if (chart) chart.destroy();
+  if (chart) chart.destroy();
 
-      chart = new Chart(document.getElementById("chart"), {
-        type: "line",
-        data: {
-          labels: values.map((_, i) => i + 1),
-          datasets: [{
-            label: skill + " Performance",
-            data: values,
-            borderColor: "#4fc3f7",
-            backgroundColor: "transparent",
-            tension: 0.3
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              min: 0,
-              max: 100
-            }
-          }
+  chart = new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels: values.map((_, i) => i + 1),
+      datasets: [{
+        label: skill + " Performance",
+        data: values,
+        borderColor: "#4fc3f7",
+        backgroundColor: "transparent",
+        tension: 0.3
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          min: 0,
+          max: 100
         }
-      });
+      }
     }
   });
+}
 </script>
 
 </body>
